@@ -1,0 +1,39 @@
+name: CI
+
+# 계층 0·1·2 자동 검증. 계층 3(실제 DRM/HDMI)은 하드웨어가 필요해 CI 밖(미니 PC)에서 수동 실행.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 시스템 의존성 설치 (mpv/libmpv, ffmpeg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mpv libmpv2 libmpv-dev ffmpeg
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 패키지 설치 (개발 모드)
+        run: python -m pip install -e ".[dev]"
+
+      - name: 계층 0 — 정적 검사 (ruff, black, mypy)
+        run: |
+          ruff check .
+          black --check .
+          mypy src
+
+      - name: 계층 1 — 단위 테스트 (mpv 불필요)
+        run: pytest -m "not integration"
+
+      - name: 계층 2 — 통합 테스트 (실 mpv, vo/ao=null)
+        run: pytest -m integration
