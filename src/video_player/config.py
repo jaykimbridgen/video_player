@@ -16,6 +16,14 @@ from video_player.constants import SEEK_STEP_SEC, VOLUME_MAX, VOLUME_STEP
 
 @dataclass(frozen=True)
 class Config:
+    """재생에 필요한 설정 값을 한데 묶은 불변(frozen) 번들.
+
+    두 종류를 구분해 담는다 — (1) 우리 코드가 직접 쓰는 조작 단위(seek 폭·볼륨),
+    (2) libmpv 에 넘길 출력·디코딩 옵션(후자는 ``mpv_options()`` 가 보안 기본값과
+    합쳐 조립). frozen 이라 생성 후 못 바꾼다 — 재생 도중 설정이 바뀌는 혼란을 막는다.
+    필드별 의미는 각 필드의 주석을 본다.
+    """
+
     # 조작 단위.
     seek_step_sec: int = SEEK_STEP_SEC
     volume_step: int = VOLUME_STEP
