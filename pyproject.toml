@@ -50,6 +50,13 @@ ignore = ["D400", "D401", "D403", "D105", "D107"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+# docstring 정책은 라이브러리 공개 표면(src) 대상 — 계층 0·1 이 __all__ 로 검증한다.
+# 테스트 함수·가짜 객체 메서드는 이름이 곧 설명이라 docstring 강제는 노이즈("좋은 이름은 주석을 줄인다").
+# 스크립트는 모듈 docstring 으로 충분하고 main() 의 D103 만 면제한다.
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"scripts/**" = ["D103"]
+
 [tool.mypy]
 python_version = "3.10"
 # 실행 대상은 리눅스(헤드리스 Ubuntu). termios/tty 등 POSIX 모듈이 해소되도록 고정.
