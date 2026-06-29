@@ -8,3 +8,7 @@ build/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+
+# 미디어·캡처 아티팩트 — 저장소엔 영상 바이너리를 넣지 않는다(SPEC.md). 테스트 영상은 ffmpeg 로 즉석 생성.
+*.mp4
+smoke_frame.png
