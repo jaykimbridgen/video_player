@@ -37,12 +37,15 @@ class KeyboardInput:
     """리눅스 TTY 를 원시 모드로 두고 키를 Action 으로 읽어오는 입력원.
 
     컨텍스트 매니저로 사용해 원시 모드 진입/복구를 보장한다(콘솔 상태 복구).
+
+    상태:
+        _fd: 읽을 대상 파일 디스크립터(기본은 표준입력, __enter__ 에서 확정).
+        _saved: 원시 모드 진입 전 단말 속성 — __exit__ 에서 이 값으로 콘솔을 복구.
     """
 
     def __init__(self, fd: int | None = None) -> None:
-        # 기본은 표준입력. 사용 시점에 fileno 를 평가한다.
         self._fd = fd
-        # termios.tcgetattr 가 돌려주는 단말 속성(복구용). 타입 스텁이 복잡해 Any 로 둔다.
+        # 단말 속성(termios.tcgetattr 결과) — 타입 스텁이 복잡해 Any 로 둔다.
         self._saved: Any = None
 
     def __enter__(self) -> KeyboardInput:

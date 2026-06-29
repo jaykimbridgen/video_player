@@ -27,6 +27,19 @@ _REASON_EOF = b"eof"
 
 
 class Player:
+    """libmpv 인스턴스를 감싸 재생을 조작하는 엔진(PlayerLike 계약의 실제 구현).
+
+    조작 메서드는 모두 mpv 내장 OSD 로 상태를 짧게 표시한다. 종료 사유는 end-file
+    이벤트 콜백이 비동기로 기록하고, wait_for_playback() 이 그 값을 읽어 디코드
+    실패면 DecodeError 로 올린다(콜백→상태→예외의 단방향 흐름).
+
+    상태:
+        _config: OSD 표시 시간·초기 볼륨 등 정책 값의 출처.
+        _mpv: 실제 libmpv 인스턴스.
+        _end_reason: end-file 이 남긴 종료 사유(eof/error) — 콜백이 쓰고 wait_for_playback 이 읽음.
+        _file_error: 디코드 실패 시 mpv 가 준 상세 메시지.
+    """
+
     def __init__(self, config: Config, overrides: dict[str, Any] | None = None) -> None:
         self._config = config
         self._mpv = mpv.MPV(**config.mpv_options(overrides))
@@ -85,23 +98,28 @@ class Player:
 
     # --- 조작 액션 --------------------------------------------------------
     def pause(self) -> None:
+        """일시정지하고 OSD 에 ⏸ 를 잠깐 표시한다."""
         self._mpv.pause = True
         self._safe_command("show-text", "⏸", self._config.osd_duration_ms)
 
     def resume(self) -> None:
+        """재생을 재개하고 OSD 에 ▶ 를 표시한다."""
         self._mpv.pause = False
         self._safe_command("show-text", "▶", self._config.osd_duration_ms)
 
     def seek(self, delta: float) -> None:
+        """delta 초만큼 이동하고 진행 상태를 OSD 로 표시한다(경계는 mpv 가 클램프)."""
         # 키프레임 모드 탐색(빠름). 경계는 mpv 가 0~끝으로 클램프한다.
         self._safe_command("seek", delta, "relative+keyframes")
         self._safe_command("show-progress")
 
     def set_volume(self, volume: int) -> None:
+        """볼륨을 설정하고 OSD 에 현재 볼륨을 표시한다."""
         self._mpv.volume = volume
         self._safe_command("show-text", f"볼륨: {volume}%", self._config.osd_duration_ms)
 
     def toggle_mute(self) -> None:
+        """음소거를 토글하고 상태를 OSD 로 표시한다."""
         self._mpv.mute = not self._mpv.mute
         label = "음소거" if self._mpv.mute else "음소거 해제"
         self._safe_command("show-text", label, self._config.osd_duration_ms)
@@ -109,18 +127,22 @@ class Player:
     # --- 읽기 전용 속성(검증·표시용) --------------------------------------
     @property
     def paused(self) -> bool:
+        """현재 일시정지 상태."""
         return bool(self._mpv.pause)
 
     @property
     def muted(self) -> bool:
+        """현재 음소거 상태."""
         return bool(self._mpv.mute)
 
     @property
     def volume(self) -> float:
+        """현재 볼륨(0~100)."""
         return float(self._mpv.volume)
 
     @property
     def time_pos(self) -> float | None:
+        """현재 재생 위치(초). 아직 시작 전이면 None."""
         pos = self._mpv.time_pos
         return None if pos is None else float(pos)
 

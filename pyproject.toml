@@ -41,7 +41,21 @@ target-version = "py310"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B"]
+select = ["E", "F", "W", "I", "UP", "B", "D"]
+# 한국어 docstring·중복 금지 정책과 충돌하는 규칙 제외:
+#   D400/D401/D403 = 영어 산문(마침표·명령형·첫 단어 대문자) 가정 — 우리는 파라미터 이름으로 문장 시작.
+#   D105/D107 = 매직 메서드·__init__ docstring 강제 — 클래스 docstring 의 `상태:` 섹션이 이미 설명(중복 방지).
+ignore = ["D400", "D401", "D403", "D105", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# docstring 정책은 라이브러리 공개 표면(src) 대상 — 계층 0·1 이 __all__ 로 검증한다.
+# 테스트 함수·가짜 객체 메서드는 이름이 곧 설명이라 docstring 강제는 노이즈("좋은 이름은 주석을 줄인다").
+# 스크립트는 모듈 docstring 으로 충분하고 main() 의 D103 만 면제한다.
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"scripts/**" = ["D103"]
 
 [tool.mypy]
 python_version = "3.10"
